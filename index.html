@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <title>Family Shooter</title>
+        <style>
+            
+            html {height: 100%; overflow: hidden; }
+            body {position: relative; height: 100%; }
+
+            #cannon {
+                position: absolute;
+                bottom: 40px;
+                left: 0;
+                right: 0;
+            }
+
+            #toolbar {
+                position: absolute;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                background-color: black;
+                height: 40px;
+            }
+
+            #toolbar fieldset {
+                display: inline-block;
+                border: none;
+            }
+
+            #toolbar fieldset label {
+                color: white;
+            }
+
+            .bblock {
+                display: inline-block;
+                margin: 6px;
+            }
+        </style>
+    </head>
+    <body>
+
+        <div id="main"></div>
+        
+        <img id="cannon" src="cannon.png" alt="top za strelat" title="top za strelat">
+
+        <div id="toolbar">
+            <fieldset>
+                <label for="cbSelectShooter">Shooter</label>
+                <select name="cbSelectShooter" id="cbSelectShooter"></select>
+                <img src alt="Who is shooter" id="shooterImg" width="26" height="26">
+            </fieldset>
+            <fieldset>
+                <label for="cbSelectVictim">Victim</label>
+                <select name="cbSelectVictim" id="cbSelectVictim"></select>
+                <img src alt="Who is victim" id="victimImg" width="26" height="26">
+            </fieldset>
+            <fieldset>
+                <label for="txtPoints">Killed : </label>
+                <input style="width: 30px; text-align: right" id="txtPoints" type="text" value="0">
+            </fieldset>
+            <fieldset>
+                <label for="txtShots">Shots fired : </label>
+                <input style="width: 30px; text-align: right" id="txtShots" type="text" value="0">
+            </fieldset>
+            <fieldset>
+                <button id="restartBtn">Restart</button>
+            </fieldset>
+        </div>
+
+        <section id="components" style="display: none!">
+            
+            <div id="landing">
+                <div class="jumbo">
+                    <h1>Welcome to <span>The Family Shoter</span></h1>
+                    <button id="btnStart">Start shooting ?</button>
+                </div>
+            </div>
+
+            <div id="winner">
+                <div class="jumbo">
+                    <h1>You won !!!</h1>
+                    <button id="btnStart">Start another shooting ?</button>
+                </div>
+            </div>
+
+            <div id="looser">
+                <div class="jumbo">
+                    <h1>You lost looser !!!</h1>
+                    <button id="btnStart">Give it another try ?</button>
+                </div>
+            </div>
+
+        </section>
+
+        <script src="jquery-1.11.2.min.js"></script>        
+        <script src="jquery-collision.min.js"></script>        
+        <script src="fshoot.js"></script>        
+        
+    </body>
+</html>

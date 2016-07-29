@@ -1,74 +1,21 @@
 "use strict";
 $(startUp);
 
-var FSHOOTER = window.FSHOOTER = {};
-
-FSHOOTER.resourceManager = function(name){ 
-    this.name = name;
-    this.registered = {};
-};
-
-FSHOOTER.resourceManager.prototype = {
-    add: function(name, resObj) {
-        if (this.scenes[name]) throw '[FSHOOTER.resourceManager.add] The resource name "' + name + '" is already registered.';
-        this.scenes[name] = resObj || {};
-    },
-    get : function(name){
-        return this.registered[name] || null;
-    }
-};
-
-FSHOOTER.scenes = new FSHOOTER.resourceManager("scenes"); 
-FSHOOTER.scenes.add("landing", {
-    "name" : "landing",
-    "htmlTemplateId" : "#landing",
-    "init" : function(){
-        $('#btnStart').on("click", function(){
-            
-        })
-    }
-});
-
-
-
 function startUp() {
 
     var CONF = {
-        bblockNum: 1000,  // how many victims
+        invadersMovementNum: 10,  // how many victims
+        invaderMoveInterval : 5000,
+        speedUpRatio : 1000,
+
         LEFT_ARROW: 37,   // ascii keycode <
         RIGHT_ARROW: 39,  // ascii keycode >
         SPACE: 32,        // ascii keycode SPACE
         clickToPixelRatio: 25, // pixel ratio for left right arrow click (one click : RATIO pixels)
         shootDuration : 700, // duration of a shoot
-        players : {
-
-            "tibor" : {
-                img : "tibor.png",
-                nick : "Robit"
-            },
-
-            "nika" : {
-                img : "nika.png",
-                nick : "Glista"
-            },
-
-            "vasja" : {
-                img : "vasja.png",
-                nick : "Vasko"
-            },
-
-            "mitja" : {
-                img : "mitja.png",
-                nick : "Guštin"
-            },
-
-        }
-    };
-
-    var runtime = {
-
+        numOfInvaders : 40,
+    
         shootCounter: 0, // how many shoots fired
-
         bblockCounter : 0,  // how many family members created
 
         cannon: {
@@ -81,22 +28,26 @@ function startUp() {
             height: $(window).height()
         },
 
-        shootAudio : new Audio("shoot.wav"),
+        shootAudio : "sounds/shoot.wav",
+        killedAudio : "sounds/invaderkilled.wav",
 
         data : {
             killedCounter : 0,
-            shotsFired : 0,
-            selectedVictim : undefined,
-            selectedShooter : undefined
+            shotsFired : 0
+        },
+
+        intervals: {
+            invaderCharacterChangeInt : undefined,
+            invaderFleteMoveInt : undefined
         }
     };
 
     var gun = $("#cannon");
 
-    runtime.pageSize = runtime.viewport.width / runtime.cannon.width; // how many guns can be on x axis
-    runtime.gunRightMax = runtime.cannon.width * runtime.pageSize - (runtime.cannon.width / 2); // max left offset of a gun, so that at least half of gun is visible
+    CONF.pageSize = CONF.viewport.width / CONF.cannon.width; // how many guns can be on x axis
+    CONF.gunRightMax = CONF.cannon.width * CONF.pageSize - (CONF.cannon.width / 2); // max left offset of a gun, so that at least half of gun is visible
 
-    function jqCannonBall(top, left, id) {
+    function jqFireBall(top, left, id) {
         var props = {
             id: id,
             src: "cannonball.png",
@@ -111,48 +62,75 @@ function startUp() {
         return $("<img/>", props);
     }
 
-    function jqBuildBlock() {
+    function jqInvader(invaderChar) {
 
-        var id = runtime.bblockCounter++,
+        var id = CONF.bblockCounter++,
             props = {
-                src: runtime.data.selectedVictim,
-                css: {
-                    border: 1,
-                    "background-color": "red",
-                    padding: "5px"
-                },
-                class: "bblock",
+                class: "bblock new",
                 id: "bb_" + id,
+                html : "<span>" + invaderChar + "</span>",
                 data: {
                     name: "normal-div",
                     role: "building-block"
                 }
             };
 
-        return $("<img/>", props);
+        return $("<div/>", props);
     }
 
     function startSeq(){
 
-        /* block loop */
-        var setT = setInterval(function() {
 
-            //add new block
-            var jqNewBlock = jqBuildBlock();
-            $("#main").append(jqNewBlock);
+        var i, jqNewBlock, invaders = ["a", "f"];
 
-            // detect if blocks reached the shooter's cannon >> game over
-            var hitList = jqNewBlock.collision("#toolbar");
-            if(hitList && hitList.length > 0){
-                alert("GAME OVER !!!!");         
-                clearInterval(setT);            
-            }
+        /* fill initial invader grid */
 
-            // check for player won (all blocks added to scene)
-            CONF.bblockNum--;
-            if (!CONF.bblockNum) clearInterval(setT);
+        for(i=0; i< CONF.numOfInvaders; i++){
+            jqNewBlock = jqInvader(invaders[0]);
+            $("#invasion-land").append(jqNewBlock);
+        }
+
+        CONF.intervals.invaderCharacterChangeInt = setInterval(function(){ /* animate the pixel like characters */
+            $(".bblock.new").each(function(){
+                $(this).text() === invaders[0] ?  $(this).text(invaders[1]) : $(this).text(invaders[0]);
+            });
+        }, 1000);
+
+
+        /* initial first move of invaders */
+        setTimeout(function(){
+            move($("#invasion-land"), 100, 50, 100);
+
+            /* incremental speed moving of invaders */
+            CONF.intervals.invaderFleteMoveInt = setInterval(function() {
+                
+                move($("#invasion-land"), 100, 50, 100);
+                
+                /* TODO detect end of game */
+
+                var liveInvaders = $(".bblock.new");
+                liveInvaders = liveInvaders.refresh();
+
+                var hitList = liveInvaders.collision("#life-lost-wall");
+                if(hitList && hitList.length > 0){
+                    alert("You lost. Game over !");         
+                    clearInterval(CONF.intervals.invaderFleteMoveInt);
+                    clearInterval(CONF.intervals.invaderCharacterChangeInt);            
+                }
+
+                // check for player won (all blocks added to scene)
+                CONF.invadersMovementNum--;
+                if (!CONF.invadersMovementNum)
+                    clearInterval(CONF.intervals.invaderFleteMoveInt);
+                else 
+                    CONF.invaderMoveInterval -=  CONF.speedUpRatio;
+
+            }, CONF.invaderMoveInterval);
+
 
         }, 300);
+       
+        
     }
 
     function moveGun(dir) {
@@ -160,7 +138,7 @@ function startUp() {
             console.log(curpos);
 
             if (dir === "left" && curpos.left <= -(284 / 2)) return curpos;
-            if (dir === "right" && curpos.left > runtime.gunRightMax) return curpos;
+            if (dir === "right" && curpos.left > CONF.gunRightMax) return curpos;
 
             return {
                 left: curpos.left + (dir === "left" ? (-CONF.clickToPixelRatio) : CONF.clickToPixelRatio)
@@ -173,28 +151,32 @@ function startUp() {
         console.log("fire !!");
 
         var offsetTop = $("#cannon").offset().top,
-            offsetLeft = $("#cannon").offset().left + (runtime.cannon.width / 2) - 20,
-            id = "ball_" + runtime.shootCounter,
-            jqBall = jqCannonBall(offsetTop, offsetLeft, id); // create cannon ball image
+            offsetLeft = $("#cannon").offset().left + (CONF.cannon.width / 2) - 20,
+            id = "ball_" + CONF.shootCounter,
+            jqBall = jqFireBall(offsetTop, offsetLeft, id); // create cannon ball image
 
         $("body").append(jqBall); // add it to screen
 
         jqBall.animate({
-            top: 0
+            top: 0                // fire it (send it to top = 0)
         },
         {
             duration: CONF.shootDuration,
 
             start : function(){
-                runtime.data.shotsFired++;
-                $("#txtShots").val(runtime.data.shotsFired);
-                runtime.shootAudio.play();
+                CONF.data.shotsFired++;
+                $("#txtShots").text(CONF.data.shotsFired);
+                new Audio(CONF.shootAudio).play();
             },
 
-            step: function() {
-                var hitList = jqBall.collision(".bblock");
+            step: function() { /* animate the pixel like characters */
+                // check for collision (a hit) at every step of animation
+                var hitList = jqBall.collision(".bblock.new");
                 if(hitList && hitList.length > 0){
-                    hitList[0].remove();
+                    new Audio(CONF.killedAudio).play();
+
+                    $(hitList[0]).replaceWith('<div class="bblock destroyed"><span>&nbsp;</span></div>');
+
                     $(this).stop(); // stop animation
                     incKilledCounter();
                 }
@@ -202,26 +184,40 @@ function startUp() {
             },
 
             complete: function() {
-
-            },
+                console.log("The cannon bal reached end!");
+            }, // only when animation is successfully finished at 0
 
             always : function(){
                 $(this).remove();
 
                 /*check for victory*/
-                if($(".bblock").length < 1){
+                if(CONF.bblockCounter === 56){
                     alert("You won !!!!!!!");
                 }
 
-                runtime.shootCounter++;
+                CONF.shootCounter++;
 
             }
         });
     }
 
     function incKilledCounter(){
-        runtime.data.killedCounter++;
-        $("#txtPoints").val(runtime.data.killedCounter);
+        CONF.data.killedCounter++;
+        $("#txtPoints").text(CONF.data.killedCounter);
+    }
+
+    function move(jqElt, step1, step2, step3) {
+        jqElt.animate({
+            left: "+=" + step1,
+        }, 1000, function() {
+            $(this).animate({
+                top: "+=" + step2,
+            }, 1000, function() {
+                $(this).animate({
+                    left: "-=" + step3
+                }, 1000);
+            });
+        });   
     }
 
     function handleArrowPressed(evt) {
@@ -238,46 +234,11 @@ function startUp() {
         //return false; // stop propagatio
     }
 
-    function setupPlayers(players){
-        var name, options = [];
-
-        for(name in players){
-            options.push('<option value="' + name + '">' + players[name].nick + "</option>");
-        }
-
-        $("#cbSelectShooter, #cbSelectVictim").html(options.join("")).on("change", function(){
-
-            var id = $(this).attr("id"),
-                elt = $(this),
-                val = elt.val(),
-                player = players[val];
-
-            if(id==="cbSelectShooter"){
-
-                $("#shooterImg").attr("src", player.img);
-                runtime.data.selectedVictim = player.img;
-
-            }else if(id==="cbSelectVictim"){
-
-                $("#victimImg").attr("src", player.img);
-                runtime.data.selectedShooter = player.img;                
-            }
-
-        });
-    }
-
     $(window).on("keydown", handleArrowPressed);
-    setupPlayers(CONF.players);
-    $("#cbSelectShooter, #cbSelectVictim").trigger("change");
 
     startSeq();
 
-    // $("#restartBtn").on("click", function(){
-    //     startSeq();
-    //     $("#main").empty();
-    // });
-
-    console.log("Started!");
+    console.log("Space invaders started!");
     console.log(CONF);
 
 }

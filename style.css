@@ -1,0 +1,91 @@
+html { height: 100%; overflow: hidden; background-color: black; }
+body { position: relative; height: 100%; }
+
+@font-face {
+    font-family: 'pixel-invaders-font';
+    src: url('pixel-invaders.ttf');
+}
+
+#invasion-land {
+    position: absolute;
+    top: 40px;
+    left: 0;
+    width: 25em;
+}
+
+html { 
+  background: url("img/dark_sky.gif") no-repeat center center fixed; 
+  -webkit-background-size: cover;
+  -moz-background-size: cover;
+  -o-background-size: cover;
+  background-size: cover;
+}
+
+#invasion-land, #invasion-land * {
+    font-family: "pixel-invaders-font";
+    font-size: 160%;
+    color: white;
+}
+
+#toolbar span {
+    display: inline-block;
+    font-family: "pixel-invaders-font";
+    font-size: 260%;
+    color: #33ff00;   
+    width: 3em;
+    text-align: right;
+}
+
+#cannon {
+    position: absolute;
+    bottom: 5px;
+    left: 0;
+    right: 0;
+}
+
+#toolbar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    background-color: transparent;
+    height: 40px;
+    text-align: center;
+}
+
+#toolbar fieldset {
+    display: inline-block;
+    border: none;
+}
+
+#toolbar fieldset label {
+    color: white;
+    text-transform: uppercase;
+}
+
+.bblock {
+    display: inline-block;
+    margin: 6px;
+    padding: 5px;
+    width: 1em;
+    height: 1em;
+}
+
+#life-lost-wall {
+    position: absolute;
+    bottom: 81px;
+    left: 0;
+    right: 0;
+    width: 1px;
+}
+
+
+hr {
+    position: fixed;
+    bottom: 2px;
+    left: 0;
+    right: 0;
+    color: #33ff00;
+    border-style: double;
+    border-width: 1px;
+}

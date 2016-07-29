@@ -2,78 +2,38 @@
 <html>
     <head>
         <meta charset="UTF-8">
-        <title>Family Shooter</title>
-        <style>
-            
-            html {height: 100%; overflow: hidden; }
-            body {position: relative; height: 100%; }
-
-            #cannon {
-                position: absolute;
-                bottom: 40px;
-                left: 0;
-                right: 0;
-            }
-
-            #toolbar {
-                position: absolute;
-                bottom: 0;
-                left: 0;
-                right: 0;
-                background-color: black;
-                height: 40px;
-            }
-
-            #toolbar fieldset {
-                display: inline-block;
-                border: none;
-            }
-
-            #toolbar fieldset label {
-                color: white;
-            }
-
-            .bblock {
-                display: inline-block;
-                margin: 6px;
-            }
-        </style>
+        <title>Space Invaders</title>
+        <meta name="description" content="Classical game written in HTML5, CSS3 and Javascript. Without canvas, I used simple HTML elements like divs. ">
+        <meta name="keywords" content="Html Space Invaders">
+        <meta name="author" content="Mitja Gustin">
+        <link media="screen" rel="stylesheet" type="text/css" href="style.css">
     </head>
     <body>
 
-        <div id="main"></div>
-        
-        <img id="cannon" src="cannon.png" alt="top za strelat" title="top za strelat">
-
         <div id="toolbar">
             <fieldset>
-                <label for="cbSelectShooter">Shooter</label>
-                <select name="cbSelectShooter" id="cbSelectShooter"></select>
-                <img src alt="Who is shooter" id="shooterImg" width="26" height="26">
+                <label for="txtPoints">score</label>
+                <span id="txtPoints">0</span>
             </fieldset>
             <fieldset>
-                <label for="cbSelectVictim">Victim</label>
-                <select name="cbSelectVictim" id="cbSelectVictim"></select>
-                <img src alt="Who is victim" id="victimImg" width="26" height="26">
-            </fieldset>
-            <fieldset>
-                <label for="txtPoints">Killed : </label>
-                <input style="width: 30px; text-align: right" id="txtPoints" type="text" value="0">
-            </fieldset>
-            <fieldset>
-                <label for="txtShots">Shots fired : </label>
-                <input style="width: 30px; text-align: right" id="txtShots" type="text" value="0">
-            </fieldset>
-            <fieldset>
-                <button id="restartBtn">Restart</button>
+                <label for="txtShots">shots</label>
+                <span id="txtShots">0</span>
             </fieldset>
         </div>
 
-        <section id="components" style="display: none!">
+        <div id="invasion-land"></div>
+        
+        <div id="life-lost-wall"></div>
+
+        <img id="cannon" src="cannon.png" alt="My gun to fire" title="My gun to fire">
+
+        <hr>
+
+        <section id="components" style="display: none;">
             
             <div id="landing">
                 <div class="jumbo">
-                    <h1>Welcome to <span>The Family Shoter</span></h1>
+                    <h1>Welcome to <span>Space invaders</span></h1>
                     <button id="btnStart">Start shooting ?</button>
                 </div>
             </div>
@@ -95,7 +55,19 @@
         </section>
 
         <script src="jquery-1.11.2.min.js"></script>        
-        <script src="jquery-collision.min.js"></script>        
+        <script src="jquery-collision.min.js"></script>    
+
+        <script>
+            "use strict";
+
+            /* our custom jquery plugins */
+
+            $.fn.refresh = function() { /* forces to refresh snapshot of jquery selector's selection */
+                return $(this.selector);
+            };
+
+
+        </script>    
         <script src="fshoot.js"></script>        
         
     </body>

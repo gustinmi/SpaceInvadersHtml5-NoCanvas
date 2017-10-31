@@ -62,3 +62,6 @@ typings/
 *.iml
 
 # our local files
+.soundDesigner
+baricade.html
+invaders.html

@@ -68,7 +68,7 @@ $(function startUp() {
     function jqFireBall(top, left, id) {
         var props = {
             id: id,
-            src: "cannonball.png",
+            src: "img/cannonball.png",
             class: "canonBall",
             css: {
                 position: "absolute",

@@ -2,7 +2,7 @@
 <html>
     <head>
         <meta charset="UTF-8">
-        <title>Space Invaders</title>
+        <title>Space Invaders HTML5</title>
         <meta name="description" content="Classical game written in HTML5, CSS3 and Javascript. Without canvas, I used simple HTML elements like divs. ">
         <meta name="keywords" content="Html Space Invaders">
         <meta name="author" content="Mitja Gustin">
@@ -11,6 +11,9 @@
     <body>
 
         <div id="toolbar">
+            <fieldset class="esc">
+                ESC to Quit
+            </fieldset>
             <fieldset>
                 <label for="txtPoints">score</label>
                 <span id="txtPoints">0</span>
@@ -29,26 +32,35 @@
 
         <hr>
 
-        <section id="components" style="display: none;">
+        <section id="dialogs">
             
-            <div id="landing">
+            <div id="landing" style="display: none;">
                 <div class="jumbo">
-                    <h1>Welcome to <span>Space invaders</span></h1>
-                    <button id="btnStartShooting">Start shooting ?</button>
+                    <h1>Welcome to <span>Space Invaders</span></h1>
+                    <button id="btnStartShooting">Click here to start ...</button>
+                    <h2 class="invadersDemo" style="color: yellow">
+                        abcdefghijklsmnoprstuvzxw
+                    </h2>
+                    <h2 class="invadersDemo" style="color: green">
+                        abcdefghijklsmnoprstuvzxw
+                    </h2>
+                    <h2 class="invadersDemo" style="color: red">
+                        abcdefghijklsmnoprstuvzxw
+                    </h2>
                 </div>
             </div>
 
-            <div id="winner">
+            <div id="winner" style="display: none;">
                 <div class="jumbo">
                     <h1>You won !!!</h1>
-                    <button id="btnStartAnother">Start another shooting ?</button>
+                    <button id="btnStartAnother">Click here to play another one ...</button>
                 </div>
             </div>
 
-            <div id="looser">
+            <div id="looser" style="display: none;">
                 <div class="jumbo">
-                    <h1>You lost looser !!!</h1>
-                    <button id="btnRestart">Give it another try ?</button>
+                    <h1>You lost !!!</h1>
+                    <button id="btnRestart">Click here to play another one ...</button>
                 </div>
             </div>
 
@@ -57,6 +69,7 @@
         <script src="js/vendor/jquery-1.11.2.min.js"></script>
         <script src="js/vendor/jquery-collision.min.js"></script>
         <script src="js/helpers.js"></script>
-        <script src="js/fshoot.js"></script>
+        <script src="app.js"></script>
+        <script src="js/dialogs.js"></script>
     </body>
 </html>

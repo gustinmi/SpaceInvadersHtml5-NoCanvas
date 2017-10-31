@@ -1,20 +1,20 @@
-html { height: 100%; overflow: hidden; background-color: black; }
+html {
+    height: 100%;
+    overflow: hidden;
+    background-color: black;
+}
 body { 
-
     position: relative;
     height: 100%;
     margin-top: 0;
     margin-left: 0;
     margin-right: 0;
-
 }
 
 fieldset {
     margin: 0;
     padding: 0;
 }
-
-
 
 @font-face {
     font-family: 'pixel-invaders-font';
@@ -43,12 +43,10 @@ html {
 }
 
 #toolbar span {
-    display: inline-block;
-    font-family: "pixel-invaders-font";
-    font-size: 260%;
-    color: #33ff00;   
-    width: 3em;
+    color: #33ff00;
+    width: 2em;
     text-align: right;
+    display: inline-block;
 }
 
 #cannon {
@@ -66,13 +64,29 @@ html {
     background-color: #bb7272;
     height: 40px;
     text-align: center;
-    z-index: 99999;
+    z-index: 99;
+    line-height: 40px;
 }
 
 #toolbar fieldset {
     display: inline-block;
     border: none;
 }
+
+#toolbar fieldset::after {
+    content: '';
+    display: inline-block;
+    width: 10px;
+}
+
+#toolbar fieldset.esc {
+    float: left;
+    color: white;
+    padding-left: 1em;
+}
+
+
+
 
 #toolbar fieldset label {
     color: white;
@@ -93,7 +107,6 @@ html {
     left: 0;
     right: 0;
     height: 2px;
-    /*background-color: white;*/
 }
 
 
@@ -113,4 +126,30 @@ hr {
     padding: 5px;
     width: .1em;
     height: 1em;
-}​
+}
+
+#dialogs {
+
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: none;
+    z-index: 999;
+    background-color: black;
+    text-align: center;
+    color: green;
+    font-size: xx-large;
+
+}
+
+#dialogs button{
+    font-size: xx-large;
+    box-shadow: 2px 3px green;
+}
+
+.invadersDemo {
+    font-family: 'pixel-invaders-font';
+    font-size: xx-large;
+}

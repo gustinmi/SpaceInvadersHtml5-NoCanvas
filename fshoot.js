@@ -1,49 +1,67 @@
 "use strict";
-$(startUp);
 
-function startUp() {
+window.SPAINV = {
+    
+    debug: false,
+
+    invaderCharacters : ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'r', 's', 't', 'u', 'v', 'z', 'x', 'w'],
+
+    fns : {
+        restart : undefined,
+        stop : undefined
+    }
+};
+
+$(function startUp() {
 
     var CONF = {
-        invadersMovementNum: 10,  // how many victims
-        invaderMoveInterval : 5000,
-        speedUpRatio : 1000,
+            invadersMovementNum: 10,  // how many victims
+            invaderMoveInterval : 10600,
+            speedUpRatio : 1000,
 
-        LEFT_ARROW: 37,   // ascii keycode <
-        RIGHT_ARROW: 39,  // ascii keycode >
-        SPACE: 32,        // ascii keycode SPACE
-        clickToPixelRatio: 25, // pixel ratio for left right arrow click (one click : RATIO pixels)
-        shootDuration : 700, // duration of a shoot
-        numOfInvaders : 40,
-    
-        shootCounter: 0, // how many shoots fired
-        bblockCounter : 0,  // how many family members created
+            LEFT_ARROW: 37,   // ascii keycode <
+            RIGHT_ARROW: 39,  // ascii keycode >
+            SPACE: 32,        // ascii keycode SPACE
+            clickToPixelRatio: 25, // pixel ratio for left right arrow click (one click : RATIO pixels)
+            shootDuration : 700, // duration of a shoot
+            numOfInvaders : 40,
+            pageSize : undefined, // how many ships can be on x axis (use to multiply effect of pressing left and right arrow )
+            gunRightMax : undefined, // max right offset for players's ship 
+            shootCounter: 0, // how many shoots fired
+            bblockCounter : 0,  // how many family members created
 
-        cannon: {
-            width: 284,
-            height: 75
+            cannon: {
+                width: undefined,
+                height: undefined
+            },
+
+            viewport: {
+                width: $(window).width(),
+                height: $(window).height()
+            },
+
+            shootAudio : "sounds/shoot.wav",
+            killedAudio : "sounds/invaderkilled.wav",
+
+            data : {
+                killedCounter : 0,
+                shotsFired : 0
+            },
+
+            intervals: {
+                invaderCharacterChangeInt : undefined,
+                invaderFleteMoveInt : undefined
+            }
         },
+        jqGun = $("#cannon"),
+        jqInvasionFleete = $("#invasion-land");
 
-        viewport: {
-            width: $(window).width(),
-            height: $(window).height()
-        },
+    if(!jqGun || !jqInvasionFleete ) throw "Tehnical error. Stopping the game!";   
 
-        shootAudio : "sounds/shoot.wav",
-        killedAudio : "sounds/invaderkilled.wav",
+    // callculate actual runtime dimensions based on user's viewport dimensions
 
-        data : {
-            killedCounter : 0,
-            shotsFired : 0
-        },
-
-        intervals: {
-            invaderCharacterChangeInt : undefined,
-            invaderFleteMoveInt : undefined
-        }
-    };
-
-    var gun = $("#cannon");
-
+    CONF.cannon.width = jqGun.width();
+    CONF.cannon.height = jqGun.height();
     CONF.pageSize = CONF.viewport.width / CONF.cannon.width; // how many guns can be on x axis
     CONF.gunRightMax = CONF.cannon.width * CONF.pageSize - (CONF.cannon.width / 2); // max left offset of a gun, so that at least half of gun is visible
 
@@ -63,12 +81,12 @@ function startUp() {
     }
 
     function jqInvader(invaderChar) {
-
-        var id = CONF.bblockCounter++,
+        var charIdx = Math.floor(invaderChar),
+            id = CONF.bblockCounter++,
             props = {
                 class: "bblock new",
                 id: "bb_" + id,
-                html : "<span>" + invaderChar + "</span>",
+                html : "<span>" + window.SPAINV.invaderCharacters[charIdx] + "</span>",
                 data: {
                     name: "normal-div",
                     role: "building-block"
@@ -80,42 +98,45 @@ function startUp() {
 
     function startSeq(){
 
-
-        var i, jqNewBlock, invaders = ["a", "f"];
+        var i, jqNewBlock, invaderCharNum;
 
         /* fill initial invader grid */
 
         for(i=0; i< CONF.numOfInvaders; i++){
-            jqNewBlock = jqInvader(invaders[0]);
-            $("#invasion-land").append(jqNewBlock);
+            invaderCharNum = getRandomInRange(0, window.SPAINV.invaderCharacters.length);
+            jqNewBlock = jqInvader(invaderCharNum);
+            jqInvasionFleete.append(jqNewBlock);
         }
 
-        CONF.intervals.invaderCharacterChangeInt = setInterval(function(){ /* animate the pixel like characters */
+        /* animate the invaders invaderCharacters */
+        CONF.intervals.invaderCharacterChangeInt = setInterval(function(){ 
             $(".bblock.new").each(function(){
-                $(this).text() === invaders[0] ?  $(this).text(invaders[1]) : $(this).text(invaders[0]);
+                var charIdx = Math.floor(getRandomInRange(0, window.SPAINV.invaderCharacters.length)),
+                    invaderChar =  window.SPAINV.invaderCharacters[charIdx];
+                $("span", $(this)).text(invaderChar);
             });
         }, 1000);
 
 
         /* initial first move of invaders */
         setTimeout(function(){
-            move($("#invasion-land"), 100, 50, 100);
+            move(jqInvasionFleete, 100, 50, 100);
 
             /* incremental speed moving of invaders */
             CONF.intervals.invaderFleteMoveInt = setInterval(function() {
                 
-                move($("#invasion-land"), 100, 50, 100);
+                move(jqInvasionFleete, 100, 50, 100);
                 
-                /* TODO detect end of game */
+                /* detect end of game */
 
                 var liveInvaders = $(".bblock.new");
-                liveInvaders = liveInvaders.refresh();
+                liveInvaders = liveInvaders.refresh(); // force jquery refresh  snapshot
 
-                var hitList = liveInvaders.collision("#life-lost-wall");
-                if(hitList && hitList.length > 0){
+                var hitList = liveInvaders.collision("#life_lost_wall");
+                if(hitList.length > 0){
+
                     alert("You lost. Game over !");         
-                    clearInterval(CONF.intervals.invaderFleteMoveInt);
-                    clearInterval(CONF.intervals.invaderCharacterChangeInt);            
+                    stopSeq();           
                 }
 
                 // check for player won (all blocks added to scene)
@@ -129,17 +150,24 @@ function startUp() {
 
 
         }, 300);
-       
-        
     }
 
-    function moveGun(dir) {
-        gun.offset(function(index, curpos) {
-            console.log(curpos);
+    function stopSeq(){
+        jqInvasionFleete.stop();
+        clearInterval(CONF.intervals.invaderFleteMoveInt);
+        clearInterval(CONF.intervals.invaderCharacterChangeInt);         
 
-            if (dir === "left" && curpos.left <= -(284 / 2)) return curpos;
+        //$(window).off("keydown", handleArrowPressed);
+    }
+
+    function moveBaseship(dir) {
+        jqGun.offset(function(index, curpos) {
+            
+            // correct offset limit. baseship stays where she is
+            if (dir === "left" && curpos.left <= -(CONF.cannon.width / 2)) return curpos;
             if (dir === "right" && curpos.left > CONF.gunRightMax) return curpos;
 
+            // otherwise move it in accordance with ratio
             return {
                 left: curpos.left + (dir === "left" ? (-CONF.clickToPixelRatio) : CONF.clickToPixelRatio)
             };
@@ -169,16 +197,25 @@ function startUp() {
                 new Audio(CONF.shootAudio).play();
             },
 
-            step: function() { /* animate the pixel like characters */
+            step: function() { /* animate the pixel like invaderCharacters */
                 // check for collision (a hit) at every step of animation
                 var hitList = jqBall.collision(".bblock.new");
                 if(hitList && hitList.length > 0){
                     new Audio(CONF.killedAudio).play();
 
-                    $(hitList[0]).replaceWith('<div class="bblock destroyed"><span>&nbsp;</span></div>');
+                    $(hitList[0]).toggleClass("new").toggleClass("destroyed");
+                    $("span", $(hitList[0])).text(" ");
 
                     $(this).stop(); // stop animation
                     incKilledCounter();
+
+                    /*check for victory*/
+                    $(".bblock.new").refresh();
+                    
+                    if($(".bblock.new").length < 1){
+                        alert("You won !!!!!!!");
+                        stopSeq();
+                    }
                 }
                 
             },
@@ -189,11 +226,6 @@ function startUp() {
 
             always : function(){
                 $(this).remove();
-
-                /*check for victory*/
-                if(CONF.bblockCounter === 56){
-                    alert("You won !!!!!!!");
-                }
 
                 CONF.shootCounter++;
 
@@ -207,25 +239,25 @@ function startUp() {
     }
 
     function move(jqElt, step1, step2, step3) {
-        jqElt.animate({
-            left: "+=" + step1,
-        }, 1000, function() {
+        jqElt.stop().animate({
+            left: "+=" + step1
+        }, 5000, function() {
             $(this).animate({
-                top: "+=" + step2,
-            }, 1000, function() {
+                top: "+=" + step2
+            }, 600, function() {
                 $(this).animate({
                     left: "-=" + step3
-                }, 1000);
+                }, 5000);
             });
         });   
     }
 
-    function handleArrowPressed(evt) {
+    function handleKeyboard(evt) {
 
         if (evt.keyCode === CONF.LEFT_ARROW)
-            moveGun("left");
+            moveBaseship("left");
         else if (evt.keyCode === CONF.RIGHT_ARROW)
-            moveGun("right");
+            moveBaseship("right");
         else if (evt.keyCode === CONF.SPACE)
             fire();
         else
@@ -234,11 +266,12 @@ function startUp() {
         //return false; // stop propagatio
     }
 
-    $(window).on("keydown", handleArrowPressed);
-
+    window.addEventListener('keydown', handleKeyboard);
     startSeq();
 
-    console.log("Space invaders started!");
-    console.log(CONF);
+    // global functions for controlling the game engine from browser's Javascript console
+    window.SPAINV.fns.restart = startSeq;
+    window.SPAINV.fns.stop = stopSeq;
 
-}
+    console.log("Space invaders started!");
+});

@@ -1,3 +1,14 @@
+window.spainv = {
+
+    evtArr : {
+        27 : 'ESC',
+        37 : 'LEFT_ARROW',   // ascii keycode <
+        39 : 'RIGHT_ARROW',  // ascii keycode >
+        32 : 'SPACE'        // ascii keycode SPACE
+    }
+
+};
+
 function App() {
     this.root = {};
 
@@ -14,10 +25,10 @@ function App() {
         speedUpRatio : 1000,
 
         ESC : 27,
-
         LEFT_ARROW: 37,   // ascii keycode <
         RIGHT_ARROW: 39,  // ascii keycode >
         SPACE: 32,        // ascii keycode SPACE
+
         clickToPixelRatio: 25, // pixel ratio for left right arrow click (one click : RATIO pixels)
         shootDuration : 700, // duration of a shoot
         numOfInvaders : 40,
@@ -51,6 +62,16 @@ function App() {
     };
     this.jqGun = undefined;
     this.jqInvasionFleete = undefined;
+
+    this.eventModel = {
+
+        //ESC : undefined,         // ascii keycode ESC
+        //LEFT_ARROW: undefined,   // ascii keycode <
+        //RIGHT_ARROW: undefined,  // ascii keycode >
+        //SPACE: undefined        // ascii keycode SPACE
+
+    };
+
 }
 
 App.prototype = {
@@ -59,18 +80,22 @@ App.prototype = {
 		this.root[name] = factory(this);
 	},
 
-    setState: function(key, val){
-        this.state[key] = val;
+    registerEvent : function(evtName, evtCb){
+        this.eventModel[evtName] = evtCb;
     },
 
-    getState: function(key){
-        return this.state[key];
+    unRegisterEvent : function(evtName){
+        delete this.eventModel[evtName];
+    },
+
+
+    getEventModel: function(){
+        return this.eventModel;
     },
 
     getConfig: function(){
        return this.config;
     },
-
 
     jqFireBall : function (top, left, id) {
         var props = {
@@ -107,7 +132,6 @@ App.prototype = {
     startSeq : function (){
 
         var i, jqNewBlock, invaderCharNum, CONF = this.config, that = this;
-        //debugger;
 
         $("#txtPoints").text("0");
         $("#txtShots").text("0");
@@ -160,16 +184,16 @@ App.prototype = {
 
             }, CONF.invaderMoveInterval);
 
-
         }, 300);
 
-        $(window).on('keydown', this.handleKeyboard);
+        $(window).on('keydown', _.throttle(that.handleKeyboard, 100));
+
     },
 
     stopSeq : function(){
         var  CONF = this.config;
 
-        $(window).off('keydown', this.handleKeyboard);
+        $(window).off('keydown');
 
         this.jqInvasionFleete.stop();
         clearInterval(CONF.intervals.invaderFleteMoveInt);
@@ -275,27 +299,13 @@ App.prototype = {
     },
 
     handleKeyboard : function (evt) {
-        var  CONF = window.app.getConfig();
-        if (evt.keyCode === CONF.LEFT_ARROW)
-            window.app.moveBaseship("left");
-        else if (evt.keyCode === CONF.RIGHT_ARROW)
-            window.app.moveBaseship("right");
-        else if (evt.keyCode === CONF.SPACE)
-            window.app.fire();
-        else if (evt.keyCode === CONF.ESC){
-            /*if (app.getState('paused') === true){
-                app.setState('paused', false);
-                window.app.startSeq();
-            }else{
-                app.setState('paused', true)
-                window.app.stopSeq();
-            }*/
-            window.app.stopSeq();
-        }
-        else
-            return;
-    },
+        var eventModel = window.app.getEventModel() ,
+            keyName = window.spainv.evtArr[evt.keyCode];
 
+        if (eventModel.hasOwnProperty(keyName))
+            eventModel[keyName]();
+
+    },
 
     onStart: function() {
 		'use strict';
@@ -316,7 +326,25 @@ App.prototype = {
 
         console.log("Space invaders started!");
 
+        //noinspection JSUnresolvedVariable
         app.root.dialogs.show('startScreen');
+
+        app.registerEvent('LEFT_ARROW', function(){
+            window.app.moveBaseship("left");
+        });
+
+        app.registerEvent('RIGHT_ARROW', function(){
+            window.app.moveBaseship("RIGHT_ARROW");
+        });
+
+        app.registerEvent('SPACE', function(){
+            window.app.fire();
+        });
+
+        app.registerEvent('ESC', function(){
+            window.app.stopSeq();
+        });
+
     }
 
 };

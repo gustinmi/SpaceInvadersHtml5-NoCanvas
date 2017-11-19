@@ -1,10 +1,15 @@
+/* global namespace */
 window.spainv = {
 
+    isDebug : true,
+
+    /* keyboard events that we listen */
     evtArr : {
-        27 : 'ESC',
+        27 : 'ESC',          // ESC key
         37 : 'LEFT_ARROW',   // ascii keycode <
         39 : 'RIGHT_ARROW',  // ascii keycode >
-        32 : 'SPACE'        // ascii keycode SPACE
+        32 : 'SPACE',        // ascii keycode SPACE
+        13 : 'ENTER'         // enter key 
     }
 
 };
@@ -12,22 +17,23 @@ window.spainv = {
 function App() {
     this.root = {};
 
-    this.state = {
-        paused : false
-    };
+    this.jqDispatcher = undefined;
 
+    this.stateInternal = {
+        paused : false,
+        killedCounter : 0,
+        shotsFired : 0
+    };
+    this.eventModel = {
+        /* this is filled by calling registerEvent*/
+    };
     this.config = {
 
         invaderCharacters : ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'r', 's', 't', 'u', 'v', 'z', 'x', 'w'],
 
         invadersMovementNum: 10,  // how many victims
-        invaderMoveInterval : 10600,
+        invaderMoveInterval : 5000 + 600 + 5000,
         speedUpRatio : 1000,
-
-        ESC : 27,
-        LEFT_ARROW: 37,   // ascii keycode <
-        RIGHT_ARROW: 39,  // ascii keycode >
-        SPACE: 32,        // ascii keycode SPACE
 
         clickToPixelRatio: 25, // pixel ratio for left right arrow click (one click : RATIO pixels)
         shootDuration : 700, // duration of a shoot
@@ -50,27 +56,21 @@ function App() {
         shootAudio : "sounds/shoot.wav",
         killedAudio : "sounds/invaderkilled.wav",
 
-        data : {
-            killedCounter : 0,
-            shotsFired : 0
-        },
-
         intervals: {
             invaderCharacterChangeInt : undefined,
             invaderFleteMoveInt : undefined
+        },
+
+        fleeteAnimationSteps:{
+            left : 100,
+            down: 50,
+            right: 100
         }
     };
     this.jqGun = undefined;
     this.jqInvasionFleete = undefined;
 
-    this.eventModel = {
-
-        //ESC : undefined,         // ascii keycode ESC
-        //LEFT_ARROW: undefined,   // ascii keycode <
-        //RIGHT_ARROW: undefined,  // ascii keycode >
-        //SPACE: undefined        // ascii keycode SPACE
-
-    };
+    this.eventModel = { /* this is filled by calling registerEvent*/ };
 
 }
 
@@ -88,13 +88,25 @@ App.prototype = {
         delete this.eventModel[evtName];
     },
 
-
-    getEventModel: function(){
-        return this.eventModel;
+    getFleete : function(){
+        return this.jqInvasionFleete;
     },
 
     getConfig: function(){
-       return this.config;
+        return this.config;
+    },
+
+    state : function(key, val){
+        /* get or set state*/
+        if (key && val){
+            this.stateInternal[key] = val;
+        }else if (key){
+            return this.stateInternal[key];
+        }
+    },
+
+    getEventModel: function(){
+        return this.eventModel;
     },
 
     jqFireBall : function (top, left, id) {
@@ -119,7 +131,7 @@ App.prototype = {
             props = {
                 class: "bblock new",
                 id: "bb_" + id,
-                html : "<span>" + CONF.invaderCharacters[charIdx] + "</span>",
+                html : '<span style="' +  'color: ' + '#' + co('') +'">' + CONF.invaderCharacters[charIdx] + "</span>",
                 data: {
                     name: "normal-div",
                     role: "building-block"
@@ -129,75 +141,146 @@ App.prototype = {
         return $("<div/>", props);
     },
 
+    detectCollision : function(selBase, selCollider){
+        var jqBaseObject = $(selBase),
+            hitList;
+
+        jqBaseObject = jqBaseObject.refresh();
+        hitList = jqBaseObject.collision(selCollider);
+
+        if(hitList.length > 0){
+            return true;
+        }
+
+    },
+
+    invaderFleeteMoveAnimation : function(){
+        var CONF = app.getConfig();
+
+        if (app.state('paused') === true) return;
+
+        app.move(app.getFleete());   // animation loop
+
+        /* detect end of game */
+
+        if(app.detectCollision(".bblock.new", "#life_lost_wall")){
+            app.stopSeq();
+            app.root.dialogs.show('loseScreen');
+        }
+
+        // check for player won (all blocks added to scene)
+        CONF.invadersMovementNum--;
+        if (!CONF.invadersMovementNum)
+            clearInterval(CONF.intervals.invaderFleteMoveInt);
+        else
+            CONF.invaderMoveInterval -=  CONF.speedUpRatio;
+
+
+    },
+
+
+    mamaShipApperance : function(){
+
+        var jqMotherShip = $('.mamaship');
+
+        jqMotherShip.animate({
+            left: -201
+        },
+        {
+            duration: 5000,
+            easing: "linear",
+
+            start : function(){
+
+            },
+
+            step: function() { /* one step of shot fired animation */
+
+            },
+
+            complete: function() { // only when animation is successfully finished at 0
+
+            },
+
+            always : function(){
+                $(this).remove();
+
+            }
+        });
+
+
+    },
+
     startSeq : function (){
 
         var i, jqNewBlock, invaderCharNum, CONF = this.config, that = this;
 
-        $("#txtPoints").text("0");
-        $("#txtShots").text("0");
+        window.app.root.statusBar.reset();
 
         this.jqInvasionFleete.empty().css('top', '40px').css('left', 0);
 
         /* fill initial invader grid */
-
         for(i=0; i< CONF.numOfInvaders; i++){
             invaderCharNum = getRandomInRange(0, CONF.invaderCharacters.length);
             jqNewBlock = this.jqInvader(invaderCharNum);
             this.jqInvasionFleete.append(jqNewBlock);
         }
 
-        /* animate the invaders invaderCharacters */
+        /* animate the invaderCharacters periodically */
         CONF.intervals.invaderCharacterChangeInt = setInterval(function(){
             $(".bblock.new").each(function(){
                 var charIdx = Math.floor(getRandomInRange(0, CONF.invaderCharacters.length)),
                     invaderChar =  CONF.invaderCharacters[charIdx];
-                $("span", $(this)).text(invaderChar);
+                $("span", $(this)).text(invaderChar).css('color', '#' + co(''));
+
             });
         }, 1000);
 
-        /* initial first move of invaders */
+        window.app.root.statusBar.startTimer();
+
+        /* animation loop for invaders */
         setTimeout(function(){
-            that.move(that.jqInvasionFleete, 100, 50, 100);
+            /* initial first move of invaders // takes time span of 1 CONF.invaderMoveInterval  */
+            that.move(that.jqInvasionFleete);
 
-            /* incremental speed moving of invaders */
-            CONF.intervals.invaderFleteMoveInt = setInterval(function() {
+            /* incremental speed moving of invader fleete */
+            CONF.intervals.invaderFleteMoveInt = setInterval(that.invaderFleeteMoveAnimation, CONF.invaderMoveInterval);
 
-                that.move(that.jqInvasionFleete, 100, 50, 100);
+        }, 300); // initial delay
 
-                /* detect end of game */
+        app.registerEvent('LEFT_ARROW', function(){
+            window.app.moveBaseship("left");
+        });
 
-                var liveInvaders = $(".bblock.new");
-                liveInvaders = liveInvaders.refresh(); // force jquery refresh  snapshot
+        app.registerEvent('RIGHT_ARROW', function(){
+            window.app.moveBaseship("RIGHT_ARROW");
+        });
 
-                var hitList = liveInvaders.collision("#life_lost_wall");
-                if(hitList.length > 0){
-                    that.stopSeq();
-                    app.root.dialogs.show('loseScreen');
-                }
+        app.registerEvent('SPACE', function(){
+            window.app.fire();
+        });
 
-                // check for player won (all blocks added to scene)
-                CONF.invadersMovementNum--;
-                if (!CONF.invadersMovementNum)
-                    clearInterval(CONF.intervals.invaderFleteMoveInt);
-                else
-                    CONF.invaderMoveInterval -=  CONF.speedUpRatio;
-
-            }, CONF.invaderMoveInterval);
-
-        }, 300);
-
-        $(window).on('keydown', _.throttle(that.handleKeyboard, 100));
+        app.registerEvent('ESC', function(){
+            window.app.state('paused', true);
+            that.jqInvasionFleete.stop();
+            app.root.dialogs.show('restartScreen');
+        });
 
     },
 
     stopSeq : function(){
         var  CONF = this.config;
 
-        $(window).off('keydown');
+        app.unRegisterEvent('LEFT_ARROW');
+        app.unRegisterEvent('RIGHT_ARROW');
+        app.unRegisterEvent('SPACE');
+        app.unRegisterEvent('ESC');
 
         this.jqInvasionFleete.stop();
         clearInterval(CONF.intervals.invaderFleteMoveInt);
         clearInterval(CONF.intervals.invaderCharacterChangeInt);
+
+        window.app.root.statusBar.stopTimer();
     },
 
     moveBaseship : function (dir) {
@@ -217,7 +300,6 @@ App.prototype = {
     },
 
     fire : function () {
-        console.log("fire !!");
 
         var that = this,
             CONF = this.config,
@@ -235,19 +317,25 @@ App.prototype = {
                 duration: CONF.shootDuration,
 
                 start : function(){
-                    CONF.data.shotsFired++;
-                    $("#txtShots").text(CONF.data.shotsFired);
+                    //debugger;
+                    app.stateInternal.shotsFired++;
+                    window.app.root.statusBar.refresh('#txtShots', app.stateInternal.shotsFired);
                     new Audio(CONF.shootAudio).play();
+
+                    that.jqDispatcher.trigger( "spainv:shotfired" );
+
                 },
 
-                step: function() { /* animate the pixel like invaderCharacters */
-                    // check for collision (a hit) at every step of animation
-                    var hitList = jqBall.collision(".bblock.new");
+                step: function() { /* one step of shot fired animation */
+                    var hitList, mamaShipKilledBonus;
+
+                    // check for collision (a hit) with invaders
+                    hitList = jqBall.collision(".bblock.new");
                     if(hitList && hitList.length > 0){
                         new Audio(CONF.killedAudio).play();
 
                         $(hitList[0]).toggleClass("new").toggleClass("destroyed");
-                        $("span", $(hitList[0])).text(" ");
+                        $("span", $(hitList[0])).text(" "); // dont delete it, it will shrink selection
 
                         $(this).stop(); // stop animation
                         that.incKilledCounter();
@@ -262,6 +350,24 @@ App.prototype = {
 
                         }
                     }
+
+                    // if mother ship is passing by, check if shot hit her
+                    if ($('.mamaline').has('.mamaship')){
+
+                        hitList = jqBall.collision(".mamaship");
+                        if(hitList && hitList.length > 0){
+                            new Audio(CONF.killedAudio).play();
+                            $('.mamaship').stop().remove();
+
+                            mamaShipKilledBonus = app.state('killedCounter') + Math.floor(getRandomInRange(10, 100));
+                            app.state('killedCounter', mamaShipKilledBonus);
+
+                            window.app.root.statusBar.refresh('#txtPoints', mamaShipKilledBonus);
+
+                        }
+
+                    }
+
 
                 },
 
@@ -279,21 +385,26 @@ App.prototype = {
     },
 
     incKilledCounter : function (){
-        var CONF = this.config;
-        CONF.data.killedCounter++;
-        $("#txtPoints").text(CONF.data.killedCounter);
+        var st = app.state('killedCounter');
+        st++;
+        app.state('killedCounter', st);
+        window.app.root.statusBar.refresh('#txtPoints', st);
     },
 
-    move : function (jqElt, step1, step2, step3) {
-        jqElt.stop().animate({
-            left: "+=" + step1
+    /* animation path for invaders (left, down, right) */
+    move : function (jqInvFleet) {
+        window.spainv.isDebug && console.log("Invaders Move animation");
+        jqInvFleet.stop().animate({
+            left: "+=" + app.getConfig().fleeteAnimationSteps.left    // move to the left side
         }, 5000, function() {
             $(this).animate({
-                top: "+=" + step2
+                top: "+=" + app.getConfig().fleeteAnimationSteps.down  // move down towards shooter
             }, 600, function() {
                 $(this).animate({
-                    left: "-=" + step3
-                }, 5000);
+                    left: "-=" + app.getConfig().fleeteAnimationSteps.right  // move right
+                }, 5000, function(){
+
+                });
             });
         });
     },
@@ -301,7 +412,7 @@ App.prototype = {
     handleKeyboard : function (evt) {
         var eventModel = window.app.getEventModel() ,
             keyName = window.spainv.evtArr[evt.keyCode];
-
+        //debugger;
         if (eventModel.hasOwnProperty(keyName))
             eventModel[keyName]();
 
@@ -312,10 +423,12 @@ App.prototype = {
 
         var CONF = this.config;
 
-        this.jqGun = $("#cannon"),
+        this.jqDispatcher = $("#dispatcher");
+
+        this.jqGun = $("#cannon");
         this.jqInvasionFleete = $("#invasion-land");
 
-        if(!this.jqGun || !this.jqInvasionFleete ) throw "Tehnical error. Stopping the game!";
+        if(!this.jqGun || !this.jqInvasionFleete) throw "Tehnical error. Stopping the game!";
 
         // callculate actual runtime dimensions based on user's viewport dimensions
 
@@ -326,24 +439,33 @@ App.prototype = {
 
         console.log("Space invaders started!");
 
+        $(window).on('keydown', _.throttle(this.handleKeyboard, 100));
+
+        this.jqDispatcher.on('spainv:shotfired', function(){
+
+            console.log('shot was fired');
+
+        });
+
         //noinspection JSUnresolvedVariable
         app.root.dialogs.show('startScreen');
 
-        app.registerEvent('LEFT_ARROW', function(){
-            window.app.moveBaseship("left");
-        });
 
-        app.registerEvent('RIGHT_ARROW', function(){
-            window.app.moveBaseship("RIGHT_ARROW");
-        });
+        // mother ship handling (random interval)
+        (function loop() {
+            var rand = getRandomInRange(15500, 10000);
+            setTimeout(function() {
 
-        app.registerEvent('SPACE', function(){
-            window.app.fire();
-        });
+                var jqMamaline = $('.mamaline'),
+                    jqMamaShip = $('<span class="mamaship">H</span>');
 
-        app.registerEvent('ESC', function(){
-            window.app.stopSeq();
-        });
+                jqMamaline.append(jqMamaShip);
+
+                console.log("Loop called with random timeout : " + rand);
+                app.mamaShipApperance();
+                loop();
+            }, rand);
+        }());
 
     }
 
@@ -353,8 +475,8 @@ App.prototype = {
 
 (function(){
 	var app = new App();
-	window.app = app;
-	window.register = app.register;
+	window.app = app; // global var for events
+	window.register = app.register; // for modules
 	document.addEventListener("DOMContentLoaded", function() {
 		app.onStart();	
 	});

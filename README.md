@@ -23,3 +23,7 @@ Another example: all invaders characters come from special font.and this simplif
 There are still numerous problems, mainly due to browser box and content models. The playe occupied is always a square, despite the fact, that when element is drawn by the browser, it looks like we have a triangle or circle. This causes little inconvenience, that look like bug.
 
 The mobile devices are not supported yet. 
+
+## Resources
+
+[Event throttling](https://css-tricks.com/debouncing-throttling-explained-examples/)

@@ -2,45 +2,47 @@ window.app.register('dialogs', function(app) {
 
     'use strict';
 
-    var exports = {};
+    var exports = {},
+        jqDialogs;
 
     var config = {
-        selDialogs : '#dialogs'
+        toolbar : '#dialogs'
+    };
+
+    var onClose= function(jqDialog){
+        jqDialog.hide();
+        jqDialogs.hide();
+        window.app.unRegisterEvent('ENTER');
     };
 
     var showStart = function(){
 
-        var jqDialogs = $(config.selDialogs),
-            jqStartDialog = $('#landing', jqDialogs),
+        var jqStartDialog = $('#landing', jqDialogs),
             jqStart = $('#btnStartShooting', jqStartDialog);
 
         jqStart.on('click', function(){
-
-            jqStartDialog.hide();
-            jqDialogs.hide();
-
+            onClose(jqStartDialog);
             window.app.startSeq();
-
         });
 
         jqStartDialog.show();
         jqDialogs.show();
 
+        window.app.registerEvent('ENTER', function(){
+            onClose(jqStartDialog);
+            window.app.startSeq();
+        });
+
     };
 
     var showWon = function(){
 
-        var jqDialogs = $(config.selDialogs),
-            jqWonDialog = $('#winner', jqDialogs),
+        var jqWonDialog = $('#winner', jqDialogs),
             jqRestartBtn = $('#btnStartAnother', jqWonDialog);
 
         jqRestartBtn.on('click', function(){
-
-            jqWonDialog.hide();
-            jqDialogs.hide();
-
+            onClose(jqWonDialog);
             window.app.startSeq();
-
         });
 
         jqWonDialog.show();
@@ -50,17 +52,12 @@ window.app.register('dialogs', function(app) {
 
     var showLose = function(){
 
-        var jqDialogs = $(config.selDialogs),
-            jqLoseDialog = $('#looser', jqDialogs),
+        var jqLoseDialog = $('#looser', jqDialogs),
             jqRestartBtn = $('#btnRestart', jqLoseDialog);
 
         jqRestartBtn.on('click', function(){
-
-            jqLoseDialog.hide();
-            jqDialogs.hide();
-
+            onClose(jqLoseDialog);
             window.app.startSeq();
-
         });
 
         jqLoseDialog.show();
@@ -68,7 +65,31 @@ window.app.register('dialogs', function(app) {
 
     };
 
+    var restartScreen = function(){
+
+        var jqRestartDialog = $('#restart', jqDialogs),
+            jqBtnResume = $('#btnResume', jqRestartDialog),
+            jqBtnRestartGame = $('#btnRestartGame', jqRestartDialog);
+
+        jqBtnResume.on('click', function(){
+            window.app.state('paused', false);
+            onClose(jqRestartDialog);
+        });
+
+        jqBtnRestartGame.on('click', function(){
+            onClose(jqRestartDialog);
+            window.app.stopSeq();
+            window.app.startSeq();
+        });
+
+        jqRestartDialog.show();
+        jqDialogs.show();
+    };
+
+
     var showDialogs = function(dialogName){
+
+        jqDialogs = jqDialogs ? jqDialogs.refresh() : $(config.toolbar);
 
         switch(dialogName){
 
@@ -82,6 +103,9 @@ window.app.register('dialogs', function(app) {
                 showLose();
                 break;
             case 'restartScreen':
+                restartScreen();
+                break;
+
             default: throw "Wrong screen requested" + dialogName;
 
         }

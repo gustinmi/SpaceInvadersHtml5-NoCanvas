@@ -2,7 +2,7 @@
 <html>
     <head>
         <meta charset="UTF-8">
-        <title>Space Invaders HTML5</title>
+        <title>Space Invaders HTML5 noCanvas</title>
         <meta name="description" content="Classical game written in HTML5, CSS3 and Javascript. Without canvas, I used simple HTML elements like divs. ">
         <meta name="keywords" content="Html Space Invaders">
         <meta name="author" content="Mitja Gustin">
@@ -10,25 +10,35 @@
     </head>
     <body>
 
+        <div style="visibility: hidden;" id="dispatcher"></div>
+
         <div id="toolbar">
             <fieldset class="esc">
                 ESC to Quit
             </fieldset>
             <fieldset>
                 <label for="txtPoints">score</label>
-                <span id="txtPoints">0</span>
+                <span class="valueInt" id="txtPoints">0</span>
             </fieldset>
             <fieldset>
                 <label for="txtShots">shots</label>
-                <span id="txtShots">0</span>
+                <span class="valueInt" id="txtShots">0</span>
+            </fieldset>
+            <fieldset>
+                <label for="txtTimer">time</label>
+                <span class="valueInt" id="txtTimer">0</span>
             </fieldset>
         </div>
 
-        <div id="invasion-land" title="The moving mass of invaders, ordery by the rank"></div>
-        
-        <div id="life_lost_wall" title="Invisible border, when collided by invasion force, the game is over"></div>
+        <div class="mamaline">
+            <span class="mamaship">H</span>
+        </div>
 
-        <img id="cannon" src="img/baseship.png" alt="My base ship" title="My base ship">
+        <div id="invasion-land"></div>
+        
+        <div id="life_lost_wall"></div>
+
+        <img id="cannon" src="img/baseship.png" alt="My base ship">
 
         <hr>
 
@@ -47,20 +57,36 @@
                     <h2 class="invadersDemo" style="color: red">
                         abcdefghijklsmnoprstuvzxw
                     </h2>
+                    <br>
+                    <h2 style="color: green; font-size: small;">
+                        Keyboard control:
+                        <br><span style="color: gray">LEFT</span> (move left),
+                        <br><span style="color: yellow">RIGHT</span> (move right),
+                        <br><span style="color: red">SPACE</span> (shoot),
+                        <br><span style="color: white">ESC</span>(pause)
+                    </h2>
                 </div>
             </div>
 
             <div id="winner" style="display: none;">
                 <div class="jumbo">
                     <h1>You won !!!</h1>
-                    <button id="btnStartAnother">Click here to play another one ...</button>
+                    <button id="btnStartAnother">Click here to play another one</button>
                 </div>
             </div>
 
             <div id="looser" style="display: none;">
                 <div class="jumbo">
                     <h1>You lost !!!</h1>
-                    <button id="btnRestart">Click here to play another one ...</button>
+                    <button id="btnRestart">Click here to play another one</button>
+                </div>
+            </div>
+
+            <div id="restart" style="display: none;">
+                <div class="jumbo">
+                    <h1>Game is paused</h1>
+                    <button id="btnResume">Click here to resume playing</button>
+                    <button id="btnRestartGame">Click here to restart game</button>
                 </div>
             </div>
 
@@ -72,5 +98,6 @@
         <script src="js/helpers.js"></script>
         <script src="app.js"></script>
         <script src="js/dialogs.js"></script>
+        <script src="js/StatusBar.js"></script>
     </body>
 </html>

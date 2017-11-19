@@ -23,7 +23,7 @@ fieldset {
 
 #invasion-land {
     position: absolute;
-    top: 40px;
+    top: 72px;
     left: 0;
     width: 25em;
 }
@@ -40,6 +40,7 @@ html {
     font-family: "pixel-invaders-font";
     font-size: 160%;
     color: white;
+    user-select: none;
 }
 
 #toolbar span {
@@ -54,6 +55,7 @@ html {
     bottom: 25px;
     left: 0;
     right: 0;
+    user-select: none;
 }
 
 #toolbar {
@@ -85,8 +87,23 @@ html {
     padding-left: 1em;
 }
 
-
-
+.mamaship {
+    color: red;
+    display: block;
+    height: 32px;
+    position: absolute;
+    right: -201px;
+    font-size: 50px;
+    font-family: "pixel-invaders-font";
+}
+.mamaline {
+    overflow: hidden;
+    position: absolute;
+    height: 32px;
+    top: 40px;
+    left: 0;
+    right: 0;
+}
 
 #toolbar fieldset label {
     color: white;
@@ -147,6 +164,12 @@ hr {
 #dialogs button{
     font-size: xx-large;
     box-shadow: 2px 3px green;
+    transition: box-shadow .3s, color 1s;
+}
+
+#dialogs button:hover {
+    box-shadow: 1px 4px yellow;
+    color: green;
 }
 
 .invadersDemo {

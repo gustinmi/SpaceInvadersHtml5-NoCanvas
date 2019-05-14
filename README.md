@@ -1,8 +1,6 @@
 # SpaceInvadersHtml5-NoCanvas
 Recreation of Space Invaders game. Created with HTML5 and Javascript, without Canvas API. Only HTML5 elements and Javascript animations with the help of jQuery are used.
 
-You can play it [here](http://invaders.mitjagustin.com/).
-
 ## Introduction
 I created this recreation of famous Space Invaders game in order to learn about HTML5 game programming with keyboard. There are multiple valuable lessons learned so far:
 
